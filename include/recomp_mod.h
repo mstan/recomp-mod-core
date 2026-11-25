@@ -10,10 +10,18 @@ typedef struct rmod_context rmod_context;
 /* Calls on one context must be serialized. Different contexts are independent.
  * Engine and plugin callbacks must not throw across the C interface.
  * All strings are UTF-8. Error text remains valid until the next mutation. */
+/* SHA-256 identity for original loaded bytes or a resolved-plan description. */
+int rmod_sha256_bytes(const void* data,size_t size,uint8_t out[32]);
 rmod_context* rmod_create(void);
 void rmod_destroy(rmod_context*);
 int rmod_initialize(rmod_context*, const char* catalog_root, const char* game_id,
                     const char* original_image_sha256);
+/* Import an engine-resolved plan when the engine owns richer manifest
+ * extensions. Caller must already validate catalog selection, target hash and
+ * resource contents. The core binds that identity and still validates every
+ * operation, expected byte, overlap and rollback during rmod_apply. */
+int rmod_bind_plan(rmod_context*,const char* game_id,const char* original_sha256,
+                   const char* resolved_plan_sha256);
 int rmod_install(rmod_context*, const char* archive_path);
 int rmod_enable(rmod_context*, const char* package, const char* feature, int enabled);
 int rmod_option_set(rmod_context*, const char* package, const char* feature,

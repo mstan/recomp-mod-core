@@ -1883,10 +1883,29 @@ template<class F> int context_call(rmod_context* c, F&& operation) noexcept {
     catch(...) { c->runtime.error="Mod core operation failed"; return 0; }
 }
 }
+extern "C" int rmod_sha256_bytes(const void* data,size_t size,uint8_t out[32]) {
+    if(!out||(!data&&size))return 0;
+    rmod_sha256_compute(static_cast<const uint8_t*>(data),size,out);return 1;
+}
 extern "C" rmod_context* rmod_create(void) { try{return new rmod_context;}catch(...){return nullptr;} }
 extern "C" void rmod_destroy(rmod_context* c) { delete c; }
 extern "C" int rmod_initialize(rmod_context* c,const char* root,const char* game,const char* hash) {
     return context_call(c,[&]{return internal_mod_runtime_initialize_c(root,game,hash);});
+}
+extern "C" int rmod_bind_plan(rmod_context* c,const char* game,const char* image,const char* plan) {
+    return context_call(c,[&]{
+        if(!game||!*game||!image||!plan||!RecompMod::valid_sha256(image)||
+           !RecompMod::valid_sha256(plan)) {
+            c->runtime.error="Invalid resolved-plan identity";return 0;
+        }
+        auto nibble=[](char value){return value<='9'?value-'0':value-'a'+10;};
+        std::array<uint8_t,32> identity{};
+        for(size_t i=0;i<identity.size();++i)
+            identity[i]=(uint8_t)((nibble(plan[i*2])<<4)|nibble(plan[i*2+1]));
+        c->runtime.game_id=game;c->runtime.rom_sha256=image;
+        c->runtime.committed_identity=identity;c->runtime.committed_ready=true;
+        c->runtime.error.clear();return 1;
+    });
 }
 extern "C" int rmod_install(rmod_context* c,const char* path) {
     return context_call(c,[&]{return internal_mod_install_archive(path);});
