@@ -1,0 +1,65 @@
+{
+  "donors": [
+    {
+      "repository": "https://github.com/mstan/vbrecomp",
+      "revision": "f7dd008e09f849ceb9707aac881955b78a3e8c5d",
+      "files": [
+        {
+          "path": "runtime/src/mod_runtime.cpp",
+          "git_blob": "96ef109a0d7a997c9bdea441e4fad0ee5241ddac",
+          "sha256": "00e31947f4d5f629ffd4dd1df9f30f4b03f68a9dc49732fefebc89a3d4869157"
+        },
+        {
+          "path": "runtime/include/mod_runtime.h",
+          "git_blob": "0e2889ba39ce4b49d4a304d1e364397e756507a5",
+          "sha256": "3d331a64e1a3c7bdc43fa1b706f8546bdec0647d8d7cfb4b7a02f8b93102b8dd"
+        },
+        {
+          "path": "runtime/src/vb_crc32.c",
+          "git_blob": "6d252ce4bd3ea60b4f83c5f1c50ebe775aa20bec",
+          "sha256": "9ed521fe99a7f0a64e01d3be7593421f09fa177e956104697255287831fb0fab"
+        },
+        {
+          "path": "runtime/include/vb_crc32.h",
+          "git_blob": "61c69af3dccd61738f238bab59449ae457010fc7",
+          "sha256": "4f03772275de589d9d3c2ed2662727a39231288cb97195af67a2515ba0a4826f"
+        },
+        {
+          "path": "runtime/src/vb_sha256.c",
+          "git_blob": "ac04ba0b0609e4f57f5e1acc0a2b54646bf87da2",
+          "sha256": "debc66ae025f88b432514706c2446d3318137b718437936898990009d1f37d7d"
+        },
+        {
+          "path": "runtime/include/vb_sha256.h",
+          "git_blob": "fb3301a61bc05cd6b7923f4987898e36ccda84b3",
+          "sha256": "f1647124bc3abc02a01f0eab15b8466ca8017024d3aa28750fb46c260cd918ca"
+        },
+        {
+          "path": "runtime/licenses/snes-mod-runtime.txt",
+          "git_blob": "ad85577e44af92cedfdeae3c81dcc5ad34aa8b1f",
+          "sha256": "265faba0468f73bd44cbd156e072fe32f77ba6e372df2733b3a7595f440973cb"
+        },
+        {
+          "path": "runtime/src/mod_identity.inc",
+          "git_blob": "12551078c9d7aca5ee4cc785dcff947bfbc72445",
+          "sha256": "897a3ec6a3fbc2b08f2f93cfcd756d1fc26ecfcf27e010e16dd73c5b0e954b7f"
+        }
+      ]
+    },
+    {
+      "repository": "https://github.com/RetroPortingToolKit/snesrecomp",
+      "revision": "0939899e8fd90399f7a27cc0d55b91ca29331568",
+      "path": "runner/src/mod_runtime.cpp",
+      "extracted": "parse_requirements"
+    }
+  ],
+  "changes": [
+    "Removed optional launcher implementation",
+    "Moved catalog/plugin/reset/frame state into independent opaque contexts",
+    "Added C host API and engine transaction/guard/rollback seam",
+    "Retained SNES requirement syntax and explicit commit validation",
+    "Streamed original-image SHA-256; made CRC table immutable for independent contexts",
+    "Kept original package/archive safety limits"
+  ],
+  "license": "PolyForm Noncommercial 1.0.0; donor CRC MIT; SHA-256 public domain"
+}
