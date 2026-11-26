@@ -1234,7 +1234,9 @@ bool parse_zip_impl(const std::vector<uint8_t>& bytes,
         entry.directory = !entry.name.empty() && entry.name.back() == '/';
         const std::string checked = entry.directory
             ? entry.name.substr(0, entry.name.size() - 1) : entry.name;
-        if (!safe_archive_name(checked)) {
+        const uint32_t attributes = le32(bytes.data() + at + 38);
+        if (!safe_archive_name(checked) ||
+            ((attributes >> 16) & 0170000u) == 0120000u || (attributes & 0x400u)) {
             set_error(error, "unsafe ZIP path: " + entry.name);
             return false;
         }
