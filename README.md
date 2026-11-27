@@ -82,3 +82,10 @@ notices and the grant's scope are documented in `LICENSE-SCOPE.md`. The CRC
 helper retains its donor MIT notice in
 `LICENSES/vbrecomp-MIT.txt`. SHA-256 is a public-domain reference implementation
 adapted to incremental input. See `PROVENANCE.json` for exact donor identities.
+
+The incremental C API in `recomp_mod/sha256.h` owns portable SHA-256 state and
+partial-block handling. `recomp-mod-core::hash` links only this C primitive;
+C-only source consumers may include `cmake/RecompModHash.cmake` directly.
+The package target links the same implementation. Complete input blocks are
+processed directly; only partial blocks require staging. Optional native crypto
+provider selection and media/file traversal remain consumer extensions.
