@@ -2,8 +2,8 @@
 
 Current licensing and the grant for existing owner contributions are documented in [LICENSE-SCOPE.md](LICENSE-SCOPE.md).
 
-Private extraction candidate for reusable native mod-package services. No system
-consumer is integrated yet. This library builds without an emulator, launcher,
+Reusable native mod-package services with a C interface and an optional C++ archive
+interface. This library builds without an emulator, launcher,
 SDL, retail images, generated guest code or network service.
 
 The implementation extracts working Virtual Boy/SNES package machinery: versioned
@@ -18,6 +18,19 @@ Opaque contexts own catalogs, selections and trusted-plugin registrations.
 Different contexts can run on different threads; serialize calls on one context.
 Only statically registered callbacks can be selected by a package. Host-side
 activation callbacks can inspect the selected options/assets/resources.
+
+Engines with richer manifests can keep their format and system-specific resource
+or hook logic as extensions. After validating selection, original-image identity
+and resource contents, they bind their resolved SHA-256 plan with `rmod_bind_plan`
+and use the same `rmod_apply` guards and transaction implementation. The
+`rmod_sha256_bytes` helper provides the shared digest implementation for those
+adapters. A rejected binding leaves the previous committed identity intact.
+
+`recomp_mod/archive.hpp` exposes the bounded stored/DEFLATE parser and extractor
+for compatible importers. Extraction accepts unchanged entries from `parse_zip`
+and the same archive bytes; the caller owns isolated staging and publication.
+The parser rejects traversal, symbolic-link and reparse metadata. C++20 builds
+retain UTF-8 relative asset names when computing path-independent identities.
 
 `rmod_apply` is the engine installation seam. It accepts patches to named engine
 memory spaces, expected bytes, replacement bytes and trusted hook identifiers.
@@ -64,7 +77,8 @@ audio quality.
 
 ## License
 
-Package runtime and extraction changes retain PolyForm Noncommercial 1.0.0
-(`LICENSE`). The CRC helper retains its donor MIT notice in
+The current aggregate license is MIT under the existing owner grant; retained
+notices and the grant's scope are documented in `LICENSE-SCOPE.md`. The CRC
+helper retains its donor MIT notice in
 `LICENSES/vbrecomp-MIT.txt`. SHA-256 is a public-domain reference implementation
 adapted to incremental input. See `PROVENANCE.json` for exact donor identities.

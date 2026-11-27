@@ -1,3 +1,4 @@
+#include <recomp_mod/archive.hpp>
 /* Adapted from snesrecomp runner/src/mod_runtime.cpp, Copyright 2026 Matthew Stan.
  * This file remains under PolyForm Noncommercial 1.0.0; see ../LICENSE.
  * VB adaptation: exact ROM hashing; no SNES APU/SRAM/MSU policy. */
@@ -1145,15 +1146,7 @@ uint32_t le32(const uint8_t* p) {
            ((uint32_t)p[2] << 16) | ((uint32_t)p[3] << 24);
 }
 
-struct ZipEntry {
-    std::string name;
-    uint16_t method = 0;
-    uint32_t crc = 0;
-    uint32_t compressed_size = 0;
-    uint32_t size = 0;
-    uint32_t local_offset = 0;
-    bool directory = false;
-};
+using ZipEntry = recomp::mods::ZipEntry;
 
 bool safe_archive_name(const std::string& name) {
     if (name.empty() || name.size() > 512 ||
@@ -1180,7 +1173,7 @@ bool safe_archive_name(const std::string& name) {
     return true;
 }
 
-bool parse_zip(const std::vector<uint8_t>& bytes,
+bool parse_zip_impl(const std::vector<uint8_t>& bytes,
                std::vector<ZipEntry>& entries, std::string* error) {
     if (bytes.size() < 22) {
         set_error(error, "not a ZIP archive");
@@ -1241,7 +1234,9 @@ bool parse_zip(const std::vector<uint8_t>& bytes,
         entry.directory = !entry.name.empty() && entry.name.back() == '/';
         const std::string checked = entry.directory
             ? entry.name.substr(0, entry.name.size() - 1) : entry.name;
-        if (!safe_archive_name(checked)) {
+        const uint32_t attributes = le32(bytes.data() + at + 38);
+        if (!safe_archive_name(checked) ||
+            ((attributes >> 16) & 0170000u) == 0120000u || (attributes & 0x400u)) {
             set_error(error, "unsafe ZIP path: " + entry.name);
             return false;
         }
@@ -1472,7 +1467,7 @@ bool inflate_deflate(const uint8_t* data, size_t size, size_t expected,
     return out.size() == expected;
 }
 
-bool extract_zip(const std::vector<uint8_t>& bytes,
+bool extract_zip_impl(const std::vector<uint8_t>& bytes,
                  const std::vector<ZipEntry>& entries,
                  const fs::path& target, std::string* error) {
     std::error_code ec;
@@ -1554,7 +1549,7 @@ bool install_archive(Runtime& runtime, const fs::path& archive,
     std::vector<uint8_t> bytes;
     std::vector<ZipEntry> entries;
     if (!read_file(archive, bytes, error) ||
-        !parse_zip(bytes, entries, error))
+        !parse_zip_impl(bytes, entries, error))
         return false;
     const bool has_manifest = std::any_of(
         entries.begin(), entries.end(),
@@ -1577,7 +1572,7 @@ bool install_archive(Runtime& runtime, const fs::path& archive,
         std::error_code ignored;
         if (!is_link(staging) && inside(runtime.root, staging)) fs::remove_all(staging, ignored);
     };
-    if (!extract_zip(bytes, entries, staging, error)) {
+    if (!extract_zip_impl(bytes, entries, staging, error)) {
         cleanup();
         return false;
     }
@@ -1883,10 +1878,29 @@ template<class F> int context_call(rmod_context* c, F&& operation) noexcept {
     catch(...) { c->runtime.error="Mod core operation failed"; return 0; }
 }
 }
+extern "C" int rmod_sha256_bytes(const void* data,size_t size,uint8_t out[32]) {
+    if(!out||(!data&&size))return 0;
+    rmod_sha256_compute(static_cast<const uint8_t*>(data),size,out);return 1;
+}
 extern "C" rmod_context* rmod_create(void) { try{return new rmod_context;}catch(...){return nullptr;} }
 extern "C" void rmod_destroy(rmod_context* c) { delete c; }
 extern "C" int rmod_initialize(rmod_context* c,const char* root,const char* game,const char* hash) {
     return context_call(c,[&]{return internal_mod_runtime_initialize_c(root,game,hash);});
+}
+extern "C" int rmod_bind_plan(rmod_context* c,const char* game,const char* image,const char* plan) {
+    return context_call(c,[&]{
+        if(!game||!*game||!image||!plan||!RecompMod::valid_sha256(image)||
+           !RecompMod::valid_sha256(plan)) {
+            c->runtime.error="Invalid resolved-plan identity";return 0;
+        }
+        auto nibble=[](char value){return value<='9'?value-'0':value-'a'+10;};
+        std::array<uint8_t,32> identity{};
+        for(size_t i=0;i<identity.size();++i)
+            identity[i]=(uint8_t)((nibble(plan[i*2])<<4)|nibble(plan[i*2+1]));
+        c->runtime.game_id=game;c->runtime.rom_sha256=image;
+        c->runtime.committed_identity=identity;c->runtime.committed_ready=true;
+        c->runtime.error.clear();return 1;
+    });
 }
 extern "C" int rmod_install(rmod_context* c,const char* path) {
     return context_call(c,[&]{return internal_mod_install_archive(path);});
@@ -1988,4 +2002,15 @@ extern "C" int rmod_apply(rmod_context* c,const rmod_patch* patches,size_t n,
         }
         e->finish(e->user,1);if(out)std::memcpy(out,fingerprint,32);c->runtime.error.clear();return 1;
     });
+}
+
+namespace recomp::mods {
+bool parse_zip(const std::vector<uint8_t>& bytes, std::vector<ZipEntry>& entries,
+               std::string* error) {
+    return RecompMod::parse_zip_impl(bytes, entries, error);
+}
+bool extract_zip(const std::vector<uint8_t>& bytes, const std::vector<ZipEntry>& entries,
+                 const std::filesystem::path& target, std::string* error) {
+    return RecompMod::extract_zip_impl(bytes, entries, target, error);
+}
 }
