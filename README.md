@@ -1,5 +1,7 @@
 # recomp-mod-core
 
+Current licensing and the grant for existing owner contributions are documented in [LICENSE-SCOPE.md](LICENSE-SCOPE.md).
+
 Private extraction candidate for reusable native mod-package services. No system
 consumer is integrated yet. This library builds without an emulator, launcher,
 SDL, retail images, generated guest code or network service.
