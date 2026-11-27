@@ -61,5 +61,16 @@
     "Streamed original-image SHA-256; made CRC table immutable for independent contexts",
     "Kept original package/archive safety limits"
   ],
-  "license": "PolyForm Noncommercial 1.0.0; donor CRC MIT; SHA-256 public domain"
+  "license": "Current aggregate MIT under LICENSE-SCOPE.md and the existing owner grant; original donor notices retained; CRC MIT; SHA-256 public domain.",
+  "compatible_api_union": {
+    "repository": "https://github.com/mstan/recomp-mod-core",
+    "qualified_revision": "410964ec67a5b17926ab742fe93c67a4a724e69b",
+    "files": [
+      "include/recomp_mod.h",
+      "include/recomp_mod/archive.hpp",
+      "src/runtime.cpp",
+      "src/mod_identity.inc"
+    ],
+    "scope": "Retained resolved-plan binding, shared byte hashing, exported archive helpers, ZIP metadata checks and C++20 UTF-8 path identity conversion. Existing engine-specific manifests/resources/hooks remain extension responsibilities."
+  }
 }

@@ -20,7 +20,8 @@ static bool identity_content(const fs::path& root,std::vector<uint8_t>& out,std:
         if(it->is_directory(ec))continue;
         if(ec || !it->is_regular_file(ec) || ec)return reject();
         const auto size=it->file_size(ec);if(ec || size>kMaxArchiveBytes-total)return reject();total+=size;
-        files.emplace(it->path().lexically_relative(root).generic_u8string(),it->path());
+        const auto utf8 = it->path().lexically_relative(root).generic_u8string();
+        files.emplace(std::string(reinterpret_cast<const char*>(utf8.data()), utf8.size()),it->path());
     }
     if(ec)return reject();
     identity_text(out,"directory");identity_text(out,std::to_string(files.size()));
