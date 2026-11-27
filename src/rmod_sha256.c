@@ -1,6 +1,6 @@
-/* sha256.c — reference SHA-256 implementation (public domain).
+/* sha256.c â€” reference SHA-256 implementation (public domain).
  *
- * Based on the FIPS 180-4 spec. One-shot only — no streaming API.
+ * Based on the FIPS 180-4 spec. One-shot only â€” no streaming API.
  * Used by the launcher to verify ROM dumps against canonical hashes
  * for projects (like zelda3) that publish SHA-256 rather than CRC32.
  */
@@ -64,10 +64,14 @@ void rmod_sha256_init(rmod_sha256_state* state) {
 }
 void rmod_sha256_update(rmod_sha256_state* state,const uint8_t* data,size_t len) {
     state->bytes+=(uint64_t)len;
-    while(len){size_t n=64-state->used;if(n>len)n=len;
+    if(state->used && len) {
+        size_t n=64-state->used;if(n>len)n=len;
         memcpy(state->block+state->used,data,n);state->used+=n;data+=n;len-=n;
         if(state->used==64){sha256_block(state->h,state->block);state->used=0;}
     }
+    /* Complete input blocks need no staging copy. Retain only a partial tail. */
+    while(len>=64){sha256_block(state->h,data);data+=64;len-=64;}
+    if(len){memcpy(state->block,data,len);state->used=len;}
 }
 void rmod_sha256_final(rmod_sha256_state* state,uint8_t out[32]) {
     uint8_t tail[128];size_t size=state->used<56?64:128;
