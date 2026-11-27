@@ -9,6 +9,9 @@
 #include <iterator>
 #include <string>
 #include <vector>
+#ifndef __cpp_char8_t
+#error This fixture must exercise a C++20 char8_t-enabled build
+#endif
 
 #define CHECK(x) do { if (!(x)) { std::fprintf(stderr, "qualified mod line %d: %s\n", __LINE__, #x); std::exit(1); } } while (0)
 namespace fs = std::filesystem;
@@ -68,7 +71,7 @@ static void archives(const fs::path& root) {
         CHECK(recomp::mods::parse_zip(data,entries,&error)&&entries.size()==2);
         const auto target=root/(std::string("extract-")+type);
         CHECK(recomp::mods::extract_zip(data,entries,target,&error));
-        CHECK(bytes(target/fs::u8path(u8"assets/雪.txt"))==bytes(root/"payload.bin"));
+        CHECK(bytes(target/fs::u8path("assets/\xE9\x9B\xAA.txt"))==bytes(root/"payload.bin"));
     }
     for(const char* name:{"symlink","reparse","traversal"}) {
         auto data=bytes(root/(std::string(name)+".rmod"));
@@ -94,7 +97,7 @@ static void identities(const fs::path& root) {
     }
     CHECK(a==b);
     const auto base=root/"catalog-b/packages/shared/1/assets";
-    fs::rename(base/fs::u8path(u8"雪.txt"),base/fs::u8path(u8"雲.txt"));
+    fs::rename(base/fs::u8path("\xE9\x9B\xAA.txt"),base/fs::u8path("\xE9\x9B\xB2.txt"));
     auto* c=rmod_create();CHECK(c);
     CHECK(rmod_initialize(c,(root/"catalog-b").string().c_str(),"fixture",digest.c_str()));
     CHECK(rmod_commit(c,(root/"original.bin").string().c_str()));rmod_identity(c,b.data());CHECK(a!=b);
